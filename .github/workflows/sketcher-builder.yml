@@ -246,7 +246,7 @@ jobs:
         if: env.BUILD_TYPE == 'Debug'
         uses: actions/upload-artifact@v4
         with:
-          name: sketcher-${{ github.ref }}-${{ matrix.build-output == 'app' && matrix.os || matrix.build-output }}-build
+          name: sketcher-${{ github.ref_name }}-${{ matrix.build-output == 'app' && matrix.os || matrix.build-output }}-build
           path: build
 
       - name: Download sketcher executable
