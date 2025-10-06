@@ -242,6 +242,13 @@ jobs:
           paths: "build/junit-report.xml"
         if: always()
 
+      - name: Upload build directory
+        if: env.BUILD_TYPE == 'Debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sketcher-${{ github.ref }}-${{ matrix.build-output == 'app' && matrix.os || matrix.build-output }}-build
+          path: build
+
       - name: Download sketcher executable
         if: matrix.build-output != 'wasm'
         uses: actions/upload-artifact@v4
