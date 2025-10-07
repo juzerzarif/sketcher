@@ -1,7 +1,16 @@
 name: Sketcher Build and Test
 
 on:
-  workflow_dispatch: ~
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to checkout
+        type: string
+      build-type:
+        description: Build type for the compilation
+        type: choice
+        options: [Release, Debug]
+        default: Release
   pull_request: ~
   merge_group: ~
   workflow_call:
@@ -60,7 +69,7 @@ jobs:
         run: git ls-files | grep -E '\.(cpp|h)$' | xargs clang-format -n --Werror
 
       - name: Determine build type
-        run: echo BUILD_TYPE=${{ matrix.build-output == 'memtest' && 'Debug' || 'Release' }} >> "$GITHUB_ENV"
+        run: echo BUILD_TYPE=${{ matrix.build-output == 'memtest' || inputs.build-type == 'Debug' && 'Debug' || 'Release' }} >> "$GITHUB_ENV"
 
       - name: Read external/versions.json
         run: |
