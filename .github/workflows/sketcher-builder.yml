@@ -1,7 +1,11 @@
 name: Sketcher Build and Test
 
 on:
-  workflow_dispatch: ~
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to checkout'
+        type: string
   pull_request: ~
   merge_group: ~
   workflow_call:
