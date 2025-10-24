@@ -35,24 +35,33 @@ test.describe("WASM Sketcher API", () => {
 
   allFormats.forEach(({ name, expectedError }) => {
     test(`Import/Export Format ${name}`, async ({ page }) => {
-      const { exported, imported } = await page.evaluate(
-        async (data) => {
+      // Export a molecule in the specified format
+      const exported = await page.evaluate(
+        (data) => {
           const { formatName } = data;
           Module.sketcher_clear();
           // Use alanine - works for both atomistic and biologics formats
           Module.sketcher_import_text("C[C@H](N)C=O");
-
-          // Export it in the specified format
-          exported = Module.sketcher_export_text(Module.Format[formatName]);
-          expect(exported).toBeTruthy();
-          expect(typeof exported).toBe("string");
-          expect(exported.length).toBeGreaterThan(0);
-
-          // Roundtrip it back in
-          Module.sketcher_clear();
-          Module.sketcher_import_text(exported);
+          const exported = Module.sketcher_export_text(
+            Module.Format[formatName],
+          );
+          return exported;
         },
         { formatName: name },
+      );
+
+      expect(exported).toBeTruthy();
+      expect(typeof exported).toBe("string");
+      expect(exported.length).toBeGreaterThan(0);
+
+      // Roundtrip it back in
+      await page.evaluate(
+        (data) => {
+          const { exportedText } = data;
+          Module.sketcher_clear();
+          Module.sketcher_import_text(exportedText);
+        },
+        { exportedText: exported },
       );
     });
   });
