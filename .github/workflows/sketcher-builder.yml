@@ -209,8 +209,25 @@ jobs:
       - name: Create wasm tarball
         if: matrix.build-output == 'wasm'
         env:
-            QT_DIR: ${{ steps.fetch-qt.outputs.path }}
+          QT_DIR: ${{ steps.fetch-qt.outputs.path }}
         run: ./wasm/create_wasm_tarball.sh sketcher-wasm
+          
+      - name: Download sketcher executable
+        if: matrix.build-output != 'wasm'
+        uses: actions/upload-artifact@v4
+        env:
+            # ".exe" on Windows, no extension everywhere else
+            EXT: ${{matrix.os == 'windows-latest' && '.exe' || ''}}
+        with:
+          name: sketcher-${{ inputs.ref }}-${{ matrix.build-output == 'app' && matrix.os || matrix.build-output }}
+          path: build/sketcher_app${{env.EXT}}
+
+      - name: Download wasm tarball
+        if: matrix.build-output == 'wasm'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sketcher-${{ inputs.ref }}-${{ matrix.build-output }}
+          path: sketcher-wasm.tar.gz
 
       - name: Run tests
         working-directory: build
@@ -239,22 +256,13 @@ jobs:
           paths: "build/junit-report.xml"
         if: always() && steps.sketcher-build.outcome == 'success'
 
-      - name: Download sketcher executable
-        if: matrix.build-output != 'wasm'
+      - name: Publish WASM test results
+        if: always() && matrix.build-output == 'wasm'
         uses: actions/upload-artifact@v4
-        env:
-            # ".exe" on Windows, no extension everywhere else
-            EXT: ${{matrix.os == 'windows-latest' && '.exe' || ''}}
         with:
-          name: sketcher-${{ inputs.ref }}-${{ matrix.build-output == 'app' && matrix.os || matrix.build-output }}
-          path: build/sketcher_app${{env.EXT}}
+          name: sketcher-${{ inputs.ref }}-wasm-test-results
+          path: test/wasm/test-results
 
-      - name: Download wasm tarball
-        if: matrix.build-output == 'wasm'
-        uses: actions/upload-artifact@v4
-        with:
-          name: sketcher-${{ inputs.ref }}-${{ matrix.build-output }}
-          path: sketcher-wasm.tar.gz
 
       - name: Publish sketcher npm package
         if: matrix.build-output == 'wasm' && inputs.publish-npm-package
