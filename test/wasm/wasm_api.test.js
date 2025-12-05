@@ -1,11 +1,79 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("WASM Sketcher API", () => {
-  test.beforeEach(async ({ page }) => {
+  test("entry function is correctly defined and loads", async ({ page }) => {
+    // This test ensures that the WASM module loads successfully and the
+    // entry function referenced in wasm_shell.html is actually defined.
+
+    const pageErrors = [];
+    page.on("pageerror", (error) => {
+      pageErrors.push(error.message);
+      console.log("Page error:", error.message);
+    });
+
+    const consoleErrors = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+        console.log("Console error:", msg.text());
+      }
+    });
+
+    // Navigate - this will trigger the init() function which references the entry function
+    console.log("Navigating to /wasm_shell.html...");
+    await page.goto("/wasm_shell.html");
+
+    // Wait for the WASM module to be fully loaded without errors
+    console.log("Waiting for window.Module to be defined...");
+    try {
+      await page.waitForFunction(() => typeof window.Module !== "undefined", {
+        timeout: 20000,
+      });
+      console.log("window.Module is defined!");
+    } catch (e) {
+      console.log("Timeout waiting for Module. Checking what exists...");
+      const debugInfo = await page.evaluate(() => {
+        return {
+          hasModule: typeof window.Module !== "undefined",
+          hasEntryFunction: typeof schrodinger_sketcher_entry !== "undefined",
+          windowKeys: Object.keys(window).filter(
+            (k) => k.includes("sketcher") || k.includes("Module"),
+          ),
+        };
+      });
+      console.log("Debug info:", debugInfo);
+      throw e;
+    }
+
+    // Verify Module has the expected API functions
+    const hasExpectedAPIs = await page.evaluate(() => {
+      return (
+        typeof Module.sketcher_clear === "function" &&
+        typeof Module.sketcher_import_text === "function" &&
+        typeof Module.sketcher_export_text === "function"
+      );
+    });
+    expect(hasExpectedAPIs).toBe(true);
+
+    // There should be no errors during loading
+    const allErrors = [...pageErrors, ...consoleErrors];
+    if (allErrors.length > 0) {
+      console.log("Errors encountered:", allErrors);
+    }
+    expect(allErrors.length).toBe(0);
+  });
+
+  test.beforeEach(async ({ page }, testInfo) => {
+    // Skip beforeEach for the entry function test since it does its own setup
+    if (testInfo.title === "entry function is correctly defined and loads") {
+      return;
+    }
     // Navigate to the page that loads the WASM module and
     // wait for the WASM module to be fully loaded and available
     await page.goto("/wasm_shell.html");
-    await page.waitForFunction(() => typeof window.Module !== "undefined");
+    await page.waitForFunction(() => typeof window.Module !== "undefined", {
+      timeout: 20000,
+    });
   });
 
   // Test import and export for all formats
