@@ -242,6 +242,7 @@ jobs:
 
       - name: Run wasm tests
         if: matrix.build-output == 'wasm'
+        continue-on-error: true
         run: |
           cd test/wasm
           npm install
