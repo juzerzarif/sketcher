@@ -245,7 +245,8 @@ if(EMSCRIPTEN)
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
-      --embind-emit-tsd=interface.d.ts)
+      --embind-emit-tsd=interface.d.ts
+      -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=[$PointerDefinition])
 endif()
 target_link_libraries(
   ${APP_TARGET}
