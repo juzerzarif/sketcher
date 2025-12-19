@@ -245,7 +245,7 @@ if(EMSCRIPTEN)
       -lembind
       -fexceptions
       -sDISABLE_EXCEPTION_CATCHING=0
-      --emit-tsd=interface.d.ts)
+      --embind-emit-tsd=interface.d.ts)
 endif()
 target_link_libraries(
   ${APP_TARGET}
